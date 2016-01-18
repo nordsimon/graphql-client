@@ -1,18 +1,18 @@
-module.exports = function(url) {
+module.exports = function(params) {
   return {
-    query: function(query, params) {
+    query: function(query, variables) {
       var headers = new Headers();
       headers.append("Content-Type", "application/json");
 
-      fetch(url, {
+      return fetch(params.url, {
         method: "POST",
         body: JSON.stringify({
-          query: bedQuery
+          query: query
         }),
-        headers: myHeaders
+        headers: headers
       }).then(function(res) {
         return res.json()
-      }).then(searchActions.receive)
+      })
     }
   }
 }

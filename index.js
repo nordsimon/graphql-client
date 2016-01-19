@@ -1,4 +1,7 @@
 module.exports = function(params) {
+  require('isomorphic-fetch');
+  if(!params.url) throw new Error("Missing url parameter")
+
   return {
     query: function(query, variables) {
       var headers = new Headers();
@@ -7,7 +10,8 @@ module.exports = function(params) {
       return fetch(params.url, {
         method: "POST",
         body: JSON.stringify({
-          query: query
+          query: query,
+          variables: variables
         }),
         headers: headers
       }).then(function(res) {

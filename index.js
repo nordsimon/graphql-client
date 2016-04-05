@@ -46,7 +46,8 @@ module.exports = function (params) {
           query: query,
           variables: variables
         }),
-        headers: headers
+        headers: headers,
+        credentials: params.credentials
       }).then(function (res) {
         return res.json()
       }).then(function (data) {

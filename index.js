@@ -31,16 +31,24 @@ function highlightQuery (query, errors) {
   return queryHighlight
 }
 
+function GraphqlError(query, errors) {
+  var e = new Error(errors.map(function (e) { return e.message }).join('\n') + '\n' + highlightQuery(query, errors))
+
+  e.rawErrors = errors
+
+  return e
+}
+
 module.exports = function (params) {
   require('isomorphic-fetch')
   if (!params.url) throw new Error('Missing url parameter')
 
   return {
-    query: function (query, variables) {
-      var headers = new Headers()
+    query: function (query, variables, onResponse) {
+      var headers = new Headers(params.headers)
       headers.append('Content-Type', 'application/json')
 
-      return fetch(params.url, {
+      var req = new Request(params.url, {
         method: 'POST',
         body: JSON.stringify({
           query: query,
@@ -48,13 +56,19 @@ module.exports = function (params) {
         }),
         headers: headers,
         credentials: params.credentials
-      }).then(function (res) {
+      })
+
+      return fetch(req)
+      .then(function (res) {
+        onResponse && onResponse(req, res)
+
         return res.json()
-      }).then(function (data) {
-        if (data.errors && data.errors.length) {
-          throw new Error(data.errors.map(function (e) { return e.message }).join('\n') + '\n' + highlightQuery(query, data.errors))
+      }).then(function (body) {
+        if (body.errors && body.errors.length) {
+          throw new GraphqlError(query, body.errors)
         }
-        return data
+
+        return body.data
       })
     }
   }

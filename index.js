@@ -8,7 +8,7 @@ function highlightQuery (query, errors) {
 
   query.split('\n').forEach(function (row, index) {
     var line = index + 1
-    var lineErrors = locations.filter(function (loc) { return loc.line === line })
+    var lineErrors = locations.filter(function (loc) { return loc && loc.line === line })
 
     queryHighlight += row + '\n'
 
@@ -40,7 +40,7 @@ module.exports = function (params) {
       var headers = new Headers()
       headers.append('Content-Type', 'application/json')
 
-      return fetch(params.url, {
+      var req = {
         method: 'POST',
         body: JSON.stringify({
           query: query,
@@ -48,7 +48,12 @@ module.exports = function (params) {
         }),
         headers: headers,
         credentials: params.credentials
-      }).then(function (res) {
+      }
+
+      if (params.onRequest) params.onRequest(req)
+
+      return fetch(params.url, req).then(function (res) {
+        if (params.onResponse) params.onResponse(res)
         return res.json()
       }).then(function (data) {
         if (data.errors && data.errors.length) {

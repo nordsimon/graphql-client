@@ -1,38 +1,3 @@
-if (process.env.ENV !== 'production') {
-  function highlightQuery (query, errors) {
-    var locations = errors.map(function (e) { return e.locations })
-      .reduce(function (a, b) {
-        return a.concat(b)
-      }, [])
-
-    var queryHighlight = ''
-
-    query.split('\n').forEach(function (row, index) {
-      var line = index + 1
-      var lineErrors = locations.filter(function (loc) { return loc && loc.line === line })
-
-      queryHighlight += row + '\n'
-
-      if (lineErrors.length) {
-        var errorHighlight = []
-
-        lineErrors.forEach(function (line) {
-          for (var i = 0; i < 8; i++) {
-            errorHighlight[line.column + i] = '~'
-          }
-        })
-
-        for (var i = 0; i < errorHighlight.length; i++) {
-          queryHighlight += errorHighlight[i] || ' '
-        }
-        queryHighlight += '\n'
-      }
-    })
-
-    return queryHighlight
-  }
-}
-
 module.exports = function (params) {
   require('isomorphic-fetch')
   if (!params.url) throw new Error('Missing url parameter')
@@ -59,11 +24,7 @@ module.exports = function (params) {
         return res.json()
       }).then(function (data) {
         if (data.errors && data.errors.length) {
-          if (process.env.ENV !== 'production') {
-            console.warn(data.errors.map(function (e) { return e.message }).join('\n') + '\n' + highlightQuery(query, data.errors))
-          } else {
-            console.warn(data.errors.map(function (e) { return e.message }).join('\n'))
-          }
+          console.error(data.errors.map(function (e) { return e.message }).join('\n') + '\n' + query)
         }
         return data
       })

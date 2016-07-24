@@ -69,7 +69,7 @@ module.exports = function (params) {
           throw new GraphqlError(query, body.errors)
         }
 
-        return body.data
+        return body
       })
     }
   }

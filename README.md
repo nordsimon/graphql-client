@@ -25,32 +25,31 @@ Use the promise API
 
 WARNING: Make sure the Promise API is polyfilled for older browsers, you can use [es6-promise](https://github.com/jakearchibald/es6-promise)
 
-```javascript
-var variables = {
-  query: "Search Query",
-  limit: 100,
-  from: 200
-}
+  ```javascript
+  var variables = {
+    query: "Search Query",
+    limit: 100,
+    from: 200
+  }
 
-client.query(`
-query search ($query: String, $from: Int, $limit: Int) {
-  search(query: $query, from: $from, limit: $limit) {
-    took,
-    totalHits,
-    hits {
-      name
+  client.query(`
+  query search ($query: String, $from: Int, $limit: Int) {
+    search(query: $query, from: $from, limit: $limit) {
+      took,
+      totalHits,
+      hits {
+        name
+      }
     }
-  }
-}`, variables, function(req, res) {
-  if(res.status === 401) {
-    throw new Error('Not authorized')
-  }
-})
-.then(function(body) {
-  console.log(body)
-})
-.catch(function(err) {
-  console.log(err.message)
-})
-
-```
+  }`, variables, function(req, res) {
+    if(res.status === 401) {
+      throw new Error('Not authorized')
+    }
+  })
+  .then(function(body) {
+    console.log(body)
+  })
+  .catch(function(err) {
+    console.log(err.message)
+  })
+  ```

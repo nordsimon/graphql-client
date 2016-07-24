@@ -34,7 +34,7 @@ function highlightQuery (query, errors) {
 function GraphqlError(query, errors) {
   var e = new Error(errors.map(function (e) { return e.message }).join('\n') + '\n' + highlightQuery(query, errors))
 
-  e.rawErrors = errors
+  e.originalErrors = errors
 
   return e
 }

@@ -1,33 +1,96 @@
-module.exports = function (params) {
-  require('isomorphic-fetch')
-  if (!params.url) throw new Error('Missing url parameter')
+/* global fetch, Headers */
+require('isomorphic-fetch')
 
-  return {
-    query: function (query, variables) {
-      var headers = new Headers()
-      headers.append('Content-Type', 'application/json')
+function Client (options) {
+  if (!options.url) throw new Error('Missing url parameter')
 
-      var req = {
-        method: 'POST',
-        body: JSON.stringify({
-          query: query,
-          variables: variables
-        }),
-        headers: headers,
-        credentials: params.credentials
-      }
+  this.options = options
+  // A stack of registered listeners
+  this.listeners = []
+}
 
-      if (params.onRequest) params.onRequest(req)
+// to decrease file size
+var proto = Client.prototype
 
-      return fetch(params.url, req).then(function (res) {
-        if (params.onResponse) params.onResponse(res)
-        return res.json()
-      }).then(function (data) {
-        if (data.errors && data.errors.length) {
-          console.error(data.errors.map(function (e) { return e.message }).join('\n') + '\n' + query)
-        }
-        return data
-      })
+/**
+ * Send a query and get a Promise
+ * @param   {String} query
+ * @param   {Object} variables
+ * @returns {Promise}
+ */
+proto.query = function (query, variables) {
+  var headers = new Headers()
+  headers.set('Content-Type', 'application/json')
+
+  var req = this.options.request || {}
+  req.method || (req.method = 'POST')
+  req.body || (req.body = JSON.stringify({
+    query: query,
+    variables: variables
+  }))
+  req.headers || (req.headers = headers)
+
+  return this.fetch(this.options.url, req)
+}
+
+/**
+ * For making requests
+ * @param   {String}   url - GraphQL endpoint
+ * @param   {Array} args
+ * @returns Promise
+ */
+proto.fetch = function (url, req) {
+  var self = this
+
+  self.trigger('request', [req])
+
+  return fetch(url, req).then(function (res) {
+    self.trigger('response', [res])
+    return res.json()
+  }).then(function (data) {
+    self.trigger('data', [data])
+    return data
+  }).catch(function (e) {
+    self.trigger('error', [e])
+  })
+}
+
+/**
+ * Register a listener.
+ * @param   {String}   eventName - 'request', 'response', 'data', 'error'
+ * @param   {Function} callback
+ * @returns Client instance
+ */
+proto.on = function (eventName, callback) {
+  var allowedNames = ['request', 'response', 'data', 'error']
+
+  if (~allowedNames.indexOf(eventName)) {
+    this.listeners.push([ eventName, callback ])
+  }
+
+  return this
+}
+
+/**
+ * Trigger an event.
+ * @param   {String} eventName - 'request', 'response', 'data', 'error'
+ * @param   {Array}  args
+ * @returns Client instance
+ */
+proto.trigger = function (eventName, args) {
+  var listeners = this.listeners
+
+  for (var i = 0; i < listeners.length; i++) {
+    if (listeners[i][0] === eventName) {
+      listeners[i][1].apply(this, args)
     }
   }
+
+  return this
 }
+
+module.exports = function (options) {
+  return new Client(options)
+}
+
+module.exports.Client = Client

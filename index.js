@@ -36,14 +36,14 @@ proto.query = function (query, variables, beforeRequest) {
 
   var result = beforeRequest && beforeRequest(req)
 
-  var results = self.trigger('request', [req])
+  var results = self.trigger('request', req)
   results.push(result)
 
   // The 'request' or `beforeRequest` hooks may redefine response when
   // returning something
   for (var i = results.length; i--;) {
     if (typeof results[i] !== 'undefined') {
-      self.trigger('data', [results[i]])
+      self.trigger('data', results[i])
       return Promise.resolve(results[i])
     }
   }
@@ -60,10 +60,10 @@ proto.fetch = function (req) {
   var self = this
 
   return fetch(self.url, req).then(function (res) {
-    self.trigger('response', [res])
+    self.trigger('response', res)
     return res.json()
   }).then(function (data) {
-    self.trigger('data', [data])
+    self.trigger('data', data)
     return data
   })
 }
@@ -87,10 +87,11 @@ proto.on = function (eventName, callback) {
 /**
  * Trigger an event.
  * @param   {String} eventName - 'request', 'response', 'data'
- * @param   {Array}  args
+ * @param   {mixed}  ...args
  * @returns {Array}  array of results received from each listener respectively
  */
-proto.trigger = function (eventName, args) {
+proto.trigger = function (eventName) {
+  var args = Array.prototype.slice.call(arguments, 1)
   var listeners = this.listeners
   var results = []
 

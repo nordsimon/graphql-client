@@ -52,19 +52,17 @@ proto.fetch = function (url, req) {
   }).then(function (data) {
     self.trigger('data', [data])
     return data
-  }).catch(function (e) {
-    self.trigger('error', [e])
   })
 }
 
 /**
  * Register a listener.
- * @param   {String}   eventName - 'request', 'response', 'data', 'error'
+ * @param   {String}   eventName - 'request', 'response', 'data'
  * @param   {Function} callback
  * @returns Client instance
  */
 proto.on = function (eventName, callback) {
-  var allowedNames = ['request', 'response', 'data', 'error']
+  var allowedNames = ['request', 'response', 'data']
 
   if (~allowedNames.indexOf(eventName)) {
     this.listeners.push([ eventName, callback ])
@@ -75,7 +73,7 @@ proto.on = function (eventName, callback) {
 
 /**
  * Trigger an event.
- * @param   {String} eventName - 'request', 'response', 'data', 'error'
+ * @param   {String} eventName - 'request', 'response', 'data'
  * @param   {Array}  args
  * @returns Client instance
  */

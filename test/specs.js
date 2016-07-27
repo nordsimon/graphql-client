@@ -50,16 +50,16 @@ describe('GraphQL client', () => {
       .query('{ user(id: "1") { id } }')
   })
 
-  it('should register "error" listener', (done) => {
+  it('should catch "error" initiated by "response" hook', (done) => {
     client
       .on('response', (res) => {
         throw new Error('foo')
       })
-      .on('error', (e) => {
+      .query('{}')
+      .catch((e) => {
         expect(e.message).to.equal('foo')
         done()
       })
-      .query('{}')
   })
 
   it('should not throw on GraphQL error in response', (done) => {

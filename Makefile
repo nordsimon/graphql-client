@@ -1,7 +1,15 @@
+MOCHA_TARGET=test/specs.js
+
 test:
-	mocha test/specs.js
+	make testonly && make lint
+
+testonly:
+	mocha $(MOCHA_TARGET)
+
+testonly-watch:
+	mocha -w $(MOCHA_TARGET)
 
 lint:
 	standard .
 
-.PHONY: test lint
+.PHONY: test testonly testonly-watch lint

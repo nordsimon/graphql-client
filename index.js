@@ -32,7 +32,14 @@ proto.query = function (query, variables, beforeRequest) {
   }))
   req.headers || (req.headers = headers)
 
-  if (beforeRequest) beforeRequest(req)
+  if (beforeRequest) {
+    var result = beforeRequest(req)
+
+    // The `beforeRequest` hook may redefine response when returning something
+    if (typeof result !== 'undefined') {
+      return Promise.resolve(result)
+    }
+  }
 
   return this.fetch(req)
 }
@@ -45,7 +52,14 @@ proto.query = function (query, variables, beforeRequest) {
 proto.fetch = function (req) {
   var self = this
 
-  self.trigger('request', [req])
+  var results = self.trigger('request', [req])
+
+  // The 'request' hook may redefine response when returning something
+  for (var i = results.length; i--;) {
+    if (typeof results[i] !== 'undefined') {
+      return Promise.resolve(results[i])
+    }
+  }
 
   return fetch(self.url, req).then(function (res) {
     self.trigger('response', [res])
@@ -76,18 +90,19 @@ proto.on = function (eventName, callback) {
  * Trigger an event.
  * @param   {String} eventName - 'request', 'response', 'data'
  * @param   {Array}  args
- * @returns Client instance
+ * @returns {Array}  array of results received from each listener respectively
  */
 proto.trigger = function (eventName, args) {
   var listeners = this.listeners
+  var results = []
 
   for (var i = 0; i < listeners.length; i++) {
     if (listeners[i][0] === eventName) {
-      listeners[i][1].apply(this, args)
+      results.push(listeners[i][1].apply(this, args))
     }
   }
 
-  return this
+  return results
 }
 
 module.exports = function (options) {

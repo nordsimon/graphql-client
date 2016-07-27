@@ -96,8 +96,30 @@ describe('GraphQL client', () => {
       expect(req.method).to.equal('GET')
       done()
     })
-      .query('{}', null, function (req) {
+      .query('{}', null, (req) => {
         req.method = 'GET'
       })
+  })
+
+  it('should redefine response through `beforeRequest` hook', () => {
+    return client
+      .query('{}', null, () => 'foo')
+      .then((r) => expect(r).to.equal('foo'))
+  })
+
+  it('should redefine response through `request` hook', () => {
+    return client
+      .on('request', () => 'foo')
+      .query('{}')
+      .then((r) => expect(r).to.equal('foo'))
+  })
+
+  it('should redefine response through latest `request` hook only', () => {
+    return client
+      .on('request', () => 'foo')
+      .on('request', () => 'bar')
+      .on('request', () => 'baz')
+      .query('{}')
+      .then((r) => expect(r).to.equal('baz'))
   })
 })

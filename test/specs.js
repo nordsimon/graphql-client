@@ -114,7 +114,7 @@ describe('GraphQL client', () => {
       .then((r) => expect(r).to.equal('foo'))
   })
 
-  it('should redefine response through latest `request` hook only', () => {
+  it('should redefine response using result from latest `request` hook', () => {
     return client
       .on('request', () => 'foo')
       .on('request', () => 'bar')

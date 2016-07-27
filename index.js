@@ -1,4 +1,4 @@
-/* global fetch, Headers */
+/* global fetch, Request */
 require('isomorphic-fetch')
 
 function Client (options) {
@@ -23,16 +23,15 @@ var proto = Client.prototype
 proto.query = function (query, variables, beforeRequest) {
   var self = this
 
-  var headers = new Headers()
-  headers.set('content-type', 'application/json')
-
-  var req = self.options.request || {}
+  var req = self.options.request || new Request(self.url)
   req.method || (req.method = 'POST')
   req.body || (req.body = JSON.stringify({
     query: query,
     variables: variables
   }))
-  req.headers || (req.headers = headers)
+  if (!req.headers.get('content-type')) {
+    req.headers.set('content-type', 'application/json')
+  }
 
   var result = beforeRequest && beforeRequest(req)
 
@@ -59,7 +58,7 @@ proto.query = function (query, variables, beforeRequest) {
 proto.fetch = function (req) {
   var self = this
 
-  return fetch(self.url, req).then(function (res) {
+  return fetch(req).then(function (res) {
     self.trigger('response', res)
     return res.json()
   }).then(function (data) {

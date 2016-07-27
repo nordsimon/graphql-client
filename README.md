@@ -15,10 +15,12 @@ var client = require('graphql-client')({
 })
   // Before request hook
   .on('request', (req) => {
-    // Do whatever you want with `req`, e.g. add JWT auth header
-    req.headers.set('Authentication', 'Bearer ' + token)
+    // Do whatever you want with `Request` instance, e.g. add JWT auth header
+    if (authenticated) {
+      req.headers.set('Authentication', 'Bearer ' + token)
+    }
   })
-  // On response hook. Access `Response` instance before parsing response body
+  // On response hook. Access `Response` instance before parsing it's body
   .on('response', (res) => {
     ...
   })

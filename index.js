@@ -2,12 +2,23 @@
 require('isomorphic-fetch')
 
 function Client (options) {
+  var self = this
+
   if (!options.url) throw new Error('Missing url parameter')
 
-  this.options = options
-  this.url = options.url
+  self.options = options
+  self.url = options.url
+
+  // Request instance that is used for `fetch`ing
+  self.request = new Request(self.url, {
+    method: 'POST'
+  })
+  self.request.headers.set('content-type', 'application/json')
+  // Ability to override default Request
+  if (options.request) self.request = options.request
+
   // A stack of registered listeners
-  this.listeners = []
+  self.listeners = []
 }
 
 // to reduce file size
@@ -23,19 +34,14 @@ var proto = Client.prototype
 proto.query = function (query, variables, beforeRequest) {
   var self = this
 
-  var req = self.options.request || new Request(self.url)
-  req.method || (req.method = 'POST')
-  req.body || (req.body = JSON.stringify({
+  self.request.body = JSON.stringify({
     query: query,
     variables: variables
-  }))
-  if (!req.headers.get('content-type')) {
-    req.headers.set('content-type', 'application/json')
-  }
+  })
 
-  var result = beforeRequest && beforeRequest(req)
+  var result = beforeRequest && beforeRequest(self.request)
 
-  var results = self.trigger('request', req)
+  var results = self.trigger('request', self.request)
   results.push(result)
 
   // The 'request' or `beforeRequest` hooks may redefine response when
@@ -47,7 +53,7 @@ proto.query = function (query, variables, beforeRequest) {
     }
   }
 
-  return self.fetch(req)
+  return self.fetch(self.request)
 }
 
 /**

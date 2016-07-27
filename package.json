@@ -6,6 +6,10 @@
   "scripts": {
     "test": "make test"
   },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/nordsimon/graphql-client"

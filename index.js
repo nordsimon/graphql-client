@@ -21,10 +21,12 @@ var proto = Client.prototype
  * @returns {Promise}
  */
 proto.query = function (query, variables, beforeRequest) {
+  var self = this
+
   var headers = new Headers()
   headers.set('content-type', 'application/json')
 
-  var req = this.options.request || {}
+  var req = self.options.request || {}
   req.method || (req.method = 'POST')
   req.body || (req.body = JSON.stringify({
     query: query,
@@ -32,16 +34,21 @@ proto.query = function (query, variables, beforeRequest) {
   }))
   req.headers || (req.headers = headers)
 
-  if (beforeRequest) {
-    var result = beforeRequest(req)
+  var result = beforeRequest && beforeRequest(req)
 
-    // The `beforeRequest` hook may redefine response when returning something
-    if (typeof result !== 'undefined') {
-      return Promise.resolve(result)
+  var results = self.trigger('request', [req])
+  results.push(result)
+
+  // The 'request' or `beforeRequest` hooks may redefine response when
+  // returning something
+  for (var i = results.length; i--;) {
+    if (typeof results[i] !== 'undefined') {
+      self.trigger('data', [results[i]])
+      return Promise.resolve(results[i])
     }
   }
 
-  return this.fetch(req)
+  return self.fetch(req)
 }
 
 /**
@@ -51,15 +58,6 @@ proto.query = function (query, variables, beforeRequest) {
  */
 proto.fetch = function (req) {
   var self = this
-
-  var results = self.trigger('request', [req])
-
-  // The 'request' hook may redefine response when returning something
-  for (var i = results.length; i--;) {
-    if (typeof results[i] !== 'undefined') {
-      return Promise.resolve(results[i])
-    }
-  }
 
   return fetch(self.url, req).then(function (res) {
     self.trigger('response', [res])

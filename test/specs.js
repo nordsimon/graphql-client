@@ -90,4 +90,14 @@ describe('GraphQL client', () => {
     })
       .query('{}')
   })
+
+  it('should modify req using `beforeRequest` function', (done) => {
+    client.on('request', (req) => {
+      expect(req.method).to.equal('GET')
+      done()
+    })
+      .query('{}', null, function (req) {
+        req.method = 'GET'
+      })
+  })
 })

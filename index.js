@@ -18,7 +18,7 @@ var proto = Client.prototype
  * @param   {Object} variables
  * @returns {Promise}
  */
-proto.query = function (query, variables) {
+proto.query = function (query, variables, beforeRequest) {
   var headers = new Headers()
   headers.set('Content-Type', 'application/json')
 
@@ -29,6 +29,8 @@ proto.query = function (query, variables) {
     variables: variables
   }))
   req.headers || (req.headers = headers)
+
+  if (beforeRequest) beforeRequest(req)
 
   return this.fetch(this.options.url, req)
 }

@@ -5,22 +5,24 @@ function Client (options) {
   if (!options.url) throw new Error('Missing url parameter')
 
   this.options = options
+  this.url = options.url
   // A stack of registered listeners
   this.listeners = []
 }
 
-// to decrease file size
+// to reduce file size
 var proto = Client.prototype
 
 /**
  * Send a query and get a Promise
- * @param   {String} query
- * @param   {Object} variables
+ * @param   {String}   query
+ * @param   {Object}   variables
+ * @param   {Function} beforeRequest hook
  * @returns {Promise}
  */
 proto.query = function (query, variables, beforeRequest) {
   var headers = new Headers()
-  headers.set('Content-Type', 'application/json')
+  headers.set('content-type', 'application/json')
 
   var req = this.options.request || {}
   req.method || (req.method = 'POST')
@@ -32,21 +34,20 @@ proto.query = function (query, variables, beforeRequest) {
 
   if (beforeRequest) beforeRequest(req)
 
-  return this.fetch(this.options.url, req)
+  return this.fetch(req)
 }
 
 /**
  * For making requests
- * @param   {String}   url - GraphQL endpoint
- * @param   {Array} args
+ * @param   {Object} req
  * @returns Promise
  */
-proto.fetch = function (url, req) {
+proto.fetch = function (req) {
   var self = this
 
   self.trigger('request', [req])
 
-  return fetch(url, req).then(function (res) {
+  return fetch(self.url, req).then(function (res) {
     self.trigger('response', [res])
     return res.json()
   }).then(function (data) {

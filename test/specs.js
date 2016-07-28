@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* global Request */
 const { expect } = require('chai')
 const { Client } = require('..')
 const server = require('./lib/server')
@@ -74,18 +75,16 @@ describe('GraphQL client', () => {
       .query('{}')
   })
 
-  it('should modify req before querying', (done) => {
-    let client = new Client({
-      url,
-      request: {
-        method: 'GET',
-        credentials: 'include'
-      }
-    })
+  it('should redefine `Request` instance before querying', (done) => {
+    const request = new Request(url)
+    request.headers.set('content-length', 3)
+
+    const client = new Client({ url, request })
 
     client.on('request', (req) => {
       expect(req.method).to.equal('GET')
-      expect(req.credentials).to.equal('include')
+      expect(req.headers.get('content-type')).to.be.falsy
+      expect(req.headers.get('content-length')).to.equal(3)
       done()
     })
       .query('{}')

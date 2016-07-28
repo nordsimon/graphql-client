@@ -10,12 +10,10 @@ function Client (options) {
   self.url = options.url
 
   // Request instance that is used for `fetch`ing
-  self.request = new Request(self.url, {
-    method: 'POST'
-  })
-  self.request.headers.set('content-type', 'application/json')
-  // Ability to override default Request
-  if (options.request) self.request = options.request
+  self.request = options.request instanceof Request
+    ? options.request
+    : new Request(self.url, options.request || { method: 'POST' })
+  self.request.headers.append('content-type', 'application/json')
 
   // A stack of registered listeners
   self.listeners = []

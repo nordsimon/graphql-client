@@ -26,7 +26,7 @@ describe('GraphQL client', () => {
     })
   })
 
-  it('should register "request" and  "response" listeners', (done) => {
+  it('should register "request" and "response" hooks', (done) => {
     let counter = 0
     client
       .on('request', function (req) {
@@ -91,7 +91,7 @@ describe('GraphQL client', () => {
       .query('{}')
   })
 
-  it('should modify req using `beforeRequest` function', (done) => {
+  it('should modify req using "beforeRequest" function', (done) => {
     client.on('request', (req) => {
       expect(req.method).to.equal('GET')
       done()
@@ -101,25 +101,51 @@ describe('GraphQL client', () => {
       })
   })
 
-  it('should redefine response through `beforeRequest` hook', () => {
+  it('should redefine response through "beforeRequest" hook', () => {
     return client
       .query('{}', null, () => 'foo')
       .then((r) => expect(r).to.equal('foo'))
   })
 
-  it('should redefine response through `request` hook', () => {
+  it('should redefine response using "request" hook', () => {
     return client
       .on('request', () => 'foo')
       .query('{}')
       .then((r) => expect(r).to.equal('foo'))
   })
 
-  it('should redefine response using result from latest `request` hook', () => {
+  it('should redefine response using result from latest "request" hook', () => {
     return client
       .on('request', () => 'foo')
       .on('request', () => 'bar')
       .on('request', () => 'baz')
       .query('{}')
       .then((r) => expect(r).to.equal('baz'))
+  })
+
+  it('should redefine `data` using "data" hook', () => {
+    return client
+      .on('data', (data) => data.data)
+      .query('{ user(id: "1") { id } }')
+      .then((r) => expect(r).to.eql({ user: { id: '1' } }))
+  })
+
+  it('should redefine using both "res" and "data" hooks', () => {
+    return client
+      .on('request', () => 'foo')
+      .on('data', (data) => (data += '-bar'))
+      .query('{}')
+      .then((r) => expect(r).to.eql('foo-bar'))
+  })
+
+  it('should redefine using "beforeRequest" and skipp other hooks', () => {
+    return client
+      // never triggers
+      .on('request', (req) => 'baz')
+      // never triggers
+      .on('data', (data) => 'bar')
+      // triggers
+      .query('{}', null, (req) => 'foo')
+      .then((r) => expect(r).to.eql('foo'))
   })
 })

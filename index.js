@@ -39,21 +39,27 @@ proto.query = function (query, variables, beforeRequest) {
     variables: variables
   })
 
+  // 'beforeRequest' is a top priority per-query hook, it should forcibly
+  // override response even from other hooks.
   var result = beforeRequest && beforeRequest(self.request)
 
-  var results = self.trigger('request', self.request)
-  results.push(result)
+  if (typeof result === 'undefined') {
+    result = self.emit('request', self.request)
 
-  // The 'request' or `beforeRequest` hooks may redefine response when
-  // returning something
-  for (var i = results.length; i--;) {
-    if (typeof results[i] !== 'undefined') {
-      self.trigger('data', results[i])
-      return Promise.resolve(results[i])
+    // No 'response' hook here, reserve it for real responses only.
+
+    // 'data' hook is only triggered if there are any data
+    if (typeof result !== 'undefined') {
+      var data = self.emit('data', result, true) // `true` for fake data
+      if (typeof data !== 'undefined') result = data
     }
   }
 
-  return self.fetch(self.request)
+  if (typeof result !== 'undefined') {
+    result = Promise.resolve(result)
+  }
+
+  return result || self.fetch(self.request)
 }
 
 /**
@@ -65,10 +71,16 @@ proto.fetch = function (req) {
   var self = this
 
   return fetch(req).then(function (res) {
-    self.trigger('response', res)
+    // 'response' hook can redefine `res`
+    var _res = self.emit('response', res)
+    if (typeof _res !== 'undefined') res = _res
+
     return res.json()
   }).then(function (data) {
-    self.trigger('data', data)
+    // 'data' hook can redefine `data`
+    var _data = self.emit('data', data)
+    if (typeof _data !== 'undefined') data = _data
+
     return data
   })
 }
@@ -90,23 +102,27 @@ proto.on = function (eventName, callback) {
 }
 
 /**
- * Trigger an event.
+ * Emit an event.
  * @param   {String} eventName - 'request', 'response', 'data'
  * @param   {mixed}  ...args
  * @returns {Array}  array of results received from each listener respectively
  */
-proto.trigger = function (eventName) {
+proto.emit = function (eventName) {
   var args = Array.prototype.slice.call(arguments, 1)
   var listeners = this.listeners
-  var results = []
+  var result
 
+  // Triggering listeners and gettings latest result
   for (var i = 0; i < listeners.length; i++) {
     if (listeners[i][0] === eventName) {
-      results.push(listeners[i][1].apply(this, args))
+      var r = listeners[i][1].apply(this, args)
+      if (typeof r !== 'undefined') {
+        result = r
+      }
     }
   }
 
-  return results
+  return result
 }
 
 module.exports = function (options) {

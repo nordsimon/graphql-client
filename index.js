@@ -1,4 +1,4 @@
-/* global fetch, Request */
+/* global fetch, Headers */
 require('isomorphic-fetch')
 
 function Client (options) {
@@ -8,12 +8,6 @@ function Client (options) {
 
   self.options = options
   self.url = options.url
-
-  // Request instance that is used for `fetch`ing
-  self.request = options.request instanceof Request
-    ? options.request
-    : new Request(self.url, options.request || { method: 'POST' })
-  self.request.headers.append('content-type', 'application/json')
 
   // A stack of registered listeners
   self.listeners = []
@@ -32,17 +26,23 @@ var proto = Client.prototype
 proto.query = function (query, variables, beforeRequest) {
   var self = this
 
-  self.request.body = JSON.stringify({
+  var req = self.options.request || {}
+  req.method || (req.method = 'POST')
+  if (!req.headers) {
+    req.headers = new Headers()
+    req.headers.set('content-type', 'application/json')
+  }
+  req.body = JSON.stringify({
     query: query,
     variables: variables
   })
 
   // 'beforeRequest' is a top priority per-query hook, it should forcibly
   // override response even from other hooks.
-  var result = beforeRequest && beforeRequest(self.request)
+  var result = beforeRequest && beforeRequest(req)
 
   if (typeof result === 'undefined') {
-    result = self.emit('request', self.request)
+    result = self.emit('request', req)
 
     // No 'response' hook here, reserve it for real responses only.
 
@@ -56,8 +56,7 @@ proto.query = function (query, variables, beforeRequest) {
   if (typeof result !== 'undefined') {
     result = Promise.resolve(result)
   }
-
-  return result || self.fetch(self.request)
+  return result || self.fetch(req)
 }
 
 /**
@@ -68,7 +67,7 @@ proto.query = function (query, variables, beforeRequest) {
 proto.fetch = function (req) {
   var self = this
 
-  return fetch(req).then(function (res) {
+  return fetch(self.url, req).then(function (res) {
     // 'response' hook can redefine `res`
     var _res = self.emit('response', res)
     if (typeof _res !== 'undefined') res = _res

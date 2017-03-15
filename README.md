@@ -16,7 +16,7 @@ Initialize the client
 var client = require('graphql-client')({
   url: 'http://your-host/graphql',
   headers: {
-    Authentication: 'Bearer ' + token
+    Authorization: 'Bearer ' + token
   }
 })
 ```

@@ -1,6 +1,6 @@
 {
   "name": "graphql-client",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "isomorphic-events": "0.1.5",
     "isomorphic-fetch": "^2.2.1"
   }
 }

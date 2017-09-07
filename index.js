@@ -31,14 +31,6 @@ function highlightQuery (query, errors) {
   return queryHighlight
 }
 
-function GraphqlError(query, errors) {
-  var e = new Error(errors.map(function (e) { return e.message }).join('\n') + '\n' + highlightQuery(query, errors))
-
-  e.originalErrors = errors
-
-  return e
-}
-
 module.exports = function (params) {
   require('isomorphic-fetch')
   if (!params.url) throw new Error('Missing url parameter')
@@ -66,7 +58,7 @@ module.exports = function (params) {
         return res.json()
       }).then(function (body) {
         if (body.errors && body.errors.length) {
-          throw new GraphqlError(query, body.errors)
+          body.highlightQuery = highlightQuery(query, body.errors)
         }
 
         return body

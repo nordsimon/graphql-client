@@ -8,7 +8,7 @@ function highlightQuery (query, errors) {
 
   query.split('\n').forEach(function (row, index) {
     var line = index + 1
-    var lineErrors = locations.filter(function (loc) { return loc.line === line })
+    var lineErrors = locations.filter(function (loc) { if(loc) return loc.line === line })
 
     queryHighlight += row + '\n'
 

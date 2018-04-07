@@ -35,7 +35,7 @@ module.exports = function (params) {
   require('isomorphic-fetch')
   if (!params.url) throw new Error('Missing url parameter')
 
-  var headers = new Headers(params.headers)
+  var headers = new Headers(params.headers || {})
   headers.append('Content-Type', 'application/json')
 
   return {

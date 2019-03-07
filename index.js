@@ -48,7 +48,8 @@ module.exports = function (params) {
           variables: variables
         }),
         headers: headers,
-        credentials: params.credentials
+        credentials: params.credentials,
+        proxy: params.proxy
       })
 
       return fetch(req)

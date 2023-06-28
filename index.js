@@ -31,8 +31,8 @@ function highlightQuery (query, errors) {
   return queryHighlight
 }
 
-module.exports = function (params) {
-  require('isomorphic-fetch')
+module.exports = function (params, fetch) {
+  if (!fetch) fetch = require('isomorphic-fetch')
   if (!params.url) throw new Error('Missing url parameter')
 
   var headers = new Headers(params.headers || {})
@@ -41,17 +41,16 @@ module.exports = function (params) {
   return {
     query: function (query, variables, onResponse) {
 
-      var req = new Request(params.url, {
+      return fetch(params.url, {
         method: 'POST',
         body: JSON.stringify({
           query: query,
           variables: variables
         }),
         headers: headers,
-        credentials: params.credentials
+        credentials: params.credentials,
+        agent: params.agent
       })
-
-      return fetch(req)
       .then(function (res) {
         onResponse && onResponse(req, res)
 
